@@ -1,3 +1,4 @@
 .dprintrc.json
 .env
 .vscode/
+test.ts
