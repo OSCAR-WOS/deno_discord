@@ -22,16 +22,16 @@ export interface GatewayBotPayload extends GatewayPayload {
   session_start_limit: SessionPayload;
 }
 
+enum DataTypes {
+  HelloData,
+  IdentifyData,
+}
+
 export interface PacketPayload {
   op: Opcode;
   d?: Record<symbol, DataTypes>;
   s?: number | null;
   t?: string | null;
-}
-
-enum DataTypes {
-  HelloData,
-  IdentifyData,
 }
 
 export interface HelloData {

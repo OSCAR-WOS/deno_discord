@@ -1,17 +1,18 @@
 import { Opcode } from "../constants.ts";
-import { IdentifyData, IdentifyDataProperties, PacketPayload } from "../types/gateway.ts";
+import { HelloData, IdentifyData, IdentifyDataProperties, PacketPayload } from "../types/gateway.ts";
 
 export class Connection {
   private _s: number | null = null;
   private _identify: IdentifyDataProperties = { $os: "linux", $browser: "deno_discord", $device: "deno_discord" };
+  private _heartbeat!: number;
   ws!: WebSocket;
 
   constructor(
     public token: string,
     public intents: number,
-    _identify?: IdentifyDataProperties,
+    identify?: IdentifyDataProperties,
   ) {
-    if (_identify) this._identify = _identify;
+    if (identify) this._identify = identify;
   }
 
   onMessage(ev: MessageEvent) {
@@ -20,6 +21,9 @@ export class Connection {
 
     switch (packet.op) {
       case Opcode.HELLO: {
+        const data = packet.d as HelloData;
+        this.heartbeat(data.heartbeat_interval);
+
         const response: PacketPayload = {
           op: Opcode.IDENTIFY,
           d: {
@@ -29,8 +33,23 @@ export class Connection {
           } as IdentifyData,
         };
 
-        return this.ws.send(JSON.stringify(response));
+        return this.send(response);
       }
     }
+  }
+
+  heartbeat(interval: number) {
+    this._heartbeat = setInterval(() => {
+      const response: PacketPayload = {
+        op: Opcode.HEARTBEAT,
+        d: this._s!,
+      };
+
+      return this.send(response);
+    }, interval);
+  }
+
+  send(payload: PacketPayload) {
+    return this.ws.send(JSON.stringify(payload));
   }
 }
